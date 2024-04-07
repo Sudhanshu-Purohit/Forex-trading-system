@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AccountsModule } from './accounts/accounts.module';
-import { FxRatesModule } from './fx-rates/fx-rates.module';
-import { FxConversionModule } from './fx-conversion/fx-conversion.module';
-import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AccountsModule } from './accounts/accounts.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { FxConversionModule } from './fx-conversion/fx-conversion.module';
+import { FxRatesModule } from './fx-rates/fx-rates.module';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -14,6 +16,10 @@ import { MongooseModule } from '@nestjs/mongoose';
       envFilePath: '.env',
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([{
+      limit: 2,
+      ttl: 3000
+    }]),
     MongooseModule.forRoot(process.env.DB_URI),
     AccountsModule, 
     FxRatesModule, 
@@ -21,6 +27,11 @@ import { MongooseModule } from '@nestjs/mongoose';
     AuthModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard
+  }],
 })
+
+
 export class AppModule {}
