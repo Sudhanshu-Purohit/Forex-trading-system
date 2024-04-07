@@ -1,18 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { GetBalanceDto } from './dto/get-balance.dto';
 import { TopUpDto } from './dto/top-up.dto';
 import { Account } from './schemas/accounts.schema';
-import { User } from 'src/auth/schemas/user.schema';
-import { GetBalanceDto } from './dto/get-balance.dto';
 
 @Injectable()
 export class AccountsService {
     constructor(
         @InjectModel(Account.name)
         private accountModel: Model<Account>,
-        @InjectModel(User.name)
-        private userModel: Model<User>,
     ) { }
 
 
@@ -20,16 +17,12 @@ export class AccountsService {
         const { userId } = getBalanceDto;
 
         try {
-            const user = await this.userModel.findById(userId);
+            const user = await this.accountModel.findById({ _id: userId });
             if (!user) {
                 throw new HttpException(`User not found`, HttpStatus.NOT_FOUND);
             }
 
-            const account = await this.accountModel.findOne({ userId });
-            if (!account) {
-                throw new HttpException(`Account not found please topup`, HttpStatus.NOT_FOUND);
-            }
-            const { balances } = account;
+            const balances = user.balances;
 
             return { balances };
         } catch (error) {
@@ -41,25 +34,13 @@ export class AccountsService {
         const { currency, amount } = topUpDto;
 
         try {
-            const user = await this.userModel.findById({ _id: userId });
+            const user = await this.accountModel.findById({ _id: userId });
             if (!user) {
                 throw new HttpException(`User does not exist`, HttpStatus.BAD_REQUEST);
             }
 
-            const update = {
-                $inc: { [`balances.${currency}`]: amount }
-            };
-
-            const options = {
-                upsert: true,
-                new: true
-            };
-
-            await this.accountModel.findOneAndUpdate(
-                { userId },
-                update,
-                options
-            );
+            user.balances[currency] += amount;
+            await user.save();
 
             return { message: "Account topped up successfully" };
         } catch (error) {
