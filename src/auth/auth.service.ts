@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
@@ -13,36 +13,51 @@ export class AuthService {
         @InjectModel(User.name)
         private userModel: Model<User>,
         private jwtService: JwtService
-    ) {}
+    ) { }
 
-    async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
+    async signUp(signUpDto: SignUpDto): Promise<{ message: string, token: string }> {
         const { name, email, password } = signUpDto;
-        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        try {
+            // checking if the user already exists
+            const existingUser = await this.userModel.findOne({ email });
+            if (existingUser) {
+                throw new HttpException('User already exists please login', HttpStatus.BAD_REQUEST);
+            }
 
-        const user = await this.userModel.create({
-            name, 
-            email,
-            password: hashedPassword
-        })
+            const hashedPassword = await bcrypt.hash(password, 10);
 
-        const token = this.jwtService.sign({ id: user._id });
-        return { token };
+            const user = await this.userModel.create({
+                name,
+                email,
+                password: hashedPassword
+            })
+
+            const token = this.jwtService.sign({ id: user._id });
+            return { message: "Sign up successful", token };
+        } catch (error) {
+            throw new HttpException(error.message, error.status);
+        }
     }
 
-    async login(loginDto: LoginDto): Promise<{ token: string }> {
+    async login(loginDto: LoginDto): Promise<{ message: string, token: string }> {
         const { email, password } = loginDto;
 
-        const user = await this.userModel.findOne({ email });
-        if(!user) {
-            throw new UnauthorizedException('Invalid email or password');
-        }
+        try {
+            const user = await this.userModel.findOne({ email });
+            if (!user) {
+                throw new UnauthorizedException('Invalid email or password');
+            }
 
-        const isPasswordMatched = await bcrypt.compare(password, user.password);
-        if(!isPasswordMatched) {
-            throw new UnauthorizedException('Invalid email or password');
-        }
+            const isPasswordMatched = await bcrypt.compare(password, user.password);
+            if (!isPasswordMatched) {
+                throw new UnauthorizedException('Invalid email or password');
+            }
 
-        const token = this.jwtService.sign({ id: user._id });
-        return { token };
+            const token = this.jwtService.sign({ id: user._id });
+            return { message: "Login successful", token };
+        } catch (error) {
+            throw new HttpException(error.message, error.status);
+        }
     }
 }

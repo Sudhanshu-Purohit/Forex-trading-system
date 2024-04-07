@@ -1,24 +1,69 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { TopUpDto } from './dto/top-up.dto';
+import { Account } from './schemas/accounts.schema';
+import { User } from 'src/auth/schemas/user.schema';
+import { GetBalanceDto } from './dto/get-balance.dto';
 
 @Injectable()
 export class AccountsService {
-    private balances: Record<string, number> = { USD: 0, EUR: 0, GBP: 0 };
+    constructor(
+        @InjectModel(Account.name)
+        private accountModel: Model<Account>,
+        @InjectModel(User.name)
+        private userModel: Model<User>,
+    ) { }
 
-    getBalances() {
-        return this.balances;
+
+    async getBalances(getBalanceDto: GetBalanceDto): Promise<{ balances: { "USD": number, "EUR": number, "GBP": number } }> {
+        const { userId } = getBalanceDto;
+
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                throw new HttpException(`User not found`, HttpStatus.NOT_FOUND);
+            }
+
+            const account = await this.accountModel.findOne({ userId });
+            if (!account) {
+                throw new HttpException(`Account not found please topup`, HttpStatus.NOT_FOUND);
+            }
+            const { balances } = account;
+
+            return { balances };
+        } catch (error) {
+            throw new HttpException(error.message, error.status);
+        }
     }
 
-    topUpAccount(currency: string, amount: number) {
-        if( amount <= 0) {
-            throw new HttpException(`Amount must be a valid number greater than 0`, HttpStatus.BAD_REQUEST);
-        }
+    async topUpAccount(topUpDto: TopUpDto, userId: string): Promise<{ message: string }> {
+        const { currency, amount } = topUpDto;
 
-        const supportedCurrencies = ["USD", "EUR", "GBP"];
-        if (!supportedCurrencies.includes(currency)) {
-            throw new HttpException(`Currency ${currency} is not supported`, HttpStatus.BAD_REQUEST);
-        }
+        try {
+            const user = await this.userModel.findById({ _id: userId });
+            if (!user) {
+                throw new HttpException(`User does not exist`, HttpStatus.BAD_REQUEST);
+            }
 
-        this.balances[currency] += amount;
-        return { message: "Account topped up successfully", balances: this.balances };
+            const update = {
+                $inc: { [`balances.${currency}`]: amount }
+            };
+
+            const options = {
+                upsert: true,
+                new: true
+            };
+
+            await this.accountModel.findOneAndUpdate(
+                { userId },
+                update,
+                options
+            );
+
+            return { message: "Account topped up successfully" };
+        } catch (error) {
+            throw new HttpException(error.message, error.status);
+        }
     }
 }
