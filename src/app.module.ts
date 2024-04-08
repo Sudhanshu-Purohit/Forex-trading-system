@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccountsModule } from './accounts/accounts.module';
@@ -7,8 +8,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { FxConversionModule } from './fx-conversion/fx-conversion.module';
-import { FxRatesModule } from './fx-rates/fx-rates.module';
-import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { APP_GUARD } from '@nestjs/core';
     }]),
     MongooseModule.forRoot(process.env.DB_URI),
     AccountsModule, 
-    FxRatesModule, 
     FxConversionModule, 
     AuthModule
   ],
