@@ -40,6 +40,7 @@ Start the server:
 - Perform FX conversion
 - Proper error handling
 - APIs documented using swagger
+- Unit tests
 
 ## Bonous Features
 
@@ -54,10 +55,37 @@ Start the server:
 - For testing with Swagger UI, navigate to http://localhost:3000/api
 
 
+
+## API Testing
+
+- To test the APIs, you can use either Postman or Swagger UI.
+- For testing with Swagger UI, navigate to http://localhost:3000/api
+
+
 ## How to test APIs
 
-To test the APIs:
+**To test APIs without opening MongoDB, follow these steps:**
 
-- First, sign up for an account.
-- Then, log in and use the token generated to authorize your requests. You can pass the token to the authorization section at the top of Swagger UI.
-- After authorization, you can test the restricted APIs.
+- Log in with the following email and password:
+
+```bash
+  Email: temp@gmail.com
+  Password: hello@123
+```
+- After logging in, use the generated JWT token to authorize your requests. You can find the authorization section at the top of the Swagger UI. Paste the token there to unlock the restricted APIs.
+
+- To check the balance, use the provided user ID: 661428d525fcf99126264b22.
+
+- Similarly, for top-up functionality, use the same user ID: 661428d525fcf99126264b22.
+
+**If you have MongoDB:**
+
+- First Sign using your credentials.
+
+- Now log in , and use the generated token to authorize your requests in Swagger UI.
+
+- Once authorized, you can test the restricted APIs.
+
+- To check the balance, retrieve your user ID from MongoDB.
+
+- For the top-up feature, also retrieve the user ID from MongoDB.
