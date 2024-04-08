@@ -13,6 +13,7 @@ import { AccountSchema } from './schemas/accounts.schema';
     ]),
   ],
   controllers: [AccountsController],
-  providers: [AccountsService]
+  providers: [AccountsService],
+  exports: [MongooseModule],
 })
 export class AccountsModule {}
