@@ -45,6 +45,7 @@ Start the server:
 
 - Authentication and authorization
 - Rate limiting to the APIs
+- Caching mechanism using cache manager
 
 
 ## API Testing
