@@ -1,3 +1,4 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -11,14 +12,9 @@ import { FxConversionModule } from './fx-conversion/fx-conversion.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env',
-      isGlobal: true,
-    }),
-    ThrottlerModule.forRoot([{
-      limit: 2,
-      ttl: 3000
-    }]),
+    ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
+    ThrottlerModule.forRoot([{ limit: 2, ttl: 3000 }]),
+    CacheModule.register({ isGlobal: true }),
     MongooseModule.forRoot(process.env.DB_URI),
     AccountsModule, 
     FxConversionModule, 
